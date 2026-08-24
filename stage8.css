@@ -1,0 +1,72 @@
+/* Stage 8 — filter accuracy and type-specific discovery */
+
+.filter-chip.removable{
+  appearance:none;
+  border:1px solid #bfd8d1;
+  background:#f2f8f6;
+  color:#123f39;
+  display:inline-flex;
+  align-items:center;
+  gap:.45rem;
+  padding:.45rem .65rem;
+  border-radius:999px;
+  font:inherit;
+  font-size:.86rem;
+  line-height:1.2;
+  cursor:pointer;
+  text-align:left;
+}
+.filter-chip.removable:hover{
+  background:#e5f1ed;
+  border-color:#93beb3;
+}
+.filter-chip.removable:focus-visible{
+  outline:3px solid rgba(8,59,53,.2);
+  outline-offset:2px;
+}
+.filter-chip.removable b{
+  font-size:1.05rem;
+  line-height:1;
+  font-weight:700;
+}
+.active-filters.is-empty{
+  display:none;
+}
+#filterSummary[data-active-count]::after{
+  content:" · " attr(data-active-count) " active";
+  font-weight:700;
+}
+#competitionTypeWrap,
+#competitionFormatWrap,
+#residentialWrap,
+#financialNeedWrap{
+  position:relative;
+}
+#competitionTypeWrap::before,
+#competitionFormatWrap::before,
+#residentialWrap::before,
+#financialNeedWrap::before{
+  content:"Type-specific";
+  display:block;
+  width:max-content;
+  max-width:100%;
+  margin:0 0 .3rem;
+  padding:.16rem .42rem;
+  border-radius:999px;
+  background:#edf5f2;
+  color:#406c64;
+  font-size:.68rem;
+  font-weight:700;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+}
+@media (max-width:700px){
+  .filter-chip.removable{
+    max-width:100%;
+  }
+  .filter-chip.removable span{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+}
