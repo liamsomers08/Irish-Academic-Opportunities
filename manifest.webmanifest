@@ -1,0 +1,11 @@
+{
+  "name": "Irish Academic Opportunities Finder",
+  "short_name": "Irish Opportunities",
+  "description": "Find academic competitions, programmes, scholarships and funding for secondary-school students in Ireland.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7f5",
+  "theme_color": "#0b3b36",
+  "icons": []
+}
