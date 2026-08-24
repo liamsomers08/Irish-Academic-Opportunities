@@ -61,6 +61,9 @@ test('mobile production progressive disclosure and detail journey', async ({ pag
   await expect(page.locator('.filters')).toBeVisible();
   await page.locator('#schoolYear').selectOption({ label: 'TY' });
   await expect(refine.locator('.mobile-filter-count')).toHaveText(/[1-9]/);
+  // Clear the filter after proving progressive disclosure/counting so the
+  // C001 regression anchor does not depend on any particular school-year map.
+  await page.locator('#schoolYear').selectOption('');
 
   await page.locator('#q').fill('Irish Mathematical Olympiad');
   const detail = page.locator('[data-detail]').first();
