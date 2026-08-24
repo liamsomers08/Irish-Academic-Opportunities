@@ -1,3 +1,4 @@
+// Final Stage 9 production browser gate: exercise only controls visible to real users.
 const { test, expect } = require('@playwright/test');
 
 async function waitForLiveData(page) {
