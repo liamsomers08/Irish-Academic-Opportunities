@@ -59,7 +59,28 @@ Stage 7 adds an owner-facing operations layer to the private source workbook:
 - feedback aggregation when the V3 Feedback Queue exists
 - operations run logging and scheduled daily/fortnightly workflows
 
-The private runtime is in `apps-script/OperationsV7.gs`. See `STAGE7-OPERATIONS.md` for the installation and review runbook. Monitoring findings never directly overwrite the public master records.
+The private runtime is in `apps-script/OperationsV7.gs`. See `STAGE7-OPERATIONS.md` for the operations model.
+
+## Stage 9 — autonomous maintenance & deployment
+
+Stage 9 converts the review-first maintenance system into a controlled autonomous production pipeline.
+
+- Stage 7 continues to detect and queue source changes.
+- Stage 9 reads eligible review items and extracts explicit official-source statuses/dates.
+- Only high-confidence green fields can be auto-written.
+- eligibility, school-year/age rules, award values, Finder eligibility and deletion remain protected from autonomous writes.
+- every write records before/after values, evidence, confidence, source URL and originating review IDs.
+- regression and data-quality gates run after each write batch.
+- a failed gate automatically rolls back the complete Stage 9 batch.
+- an `Automation Policy` sheet provides a visible master kill switch and per-run limits.
+- `Autonomous Change Log` preserves a private audit trail.
+- Stage 9 provisions its policy/log sheets and daily trigger automatically after deployment.
+
+Backend code deployment is also automated. `.github/workflows/apps-script-deploy.yml` retrieves the complete current bound Apps Script project, overlays only the GitHub-managed `apps-script/*.gs` files, preserves every other remote file, creates a new Apps Script version, updates the existing public deployment, and smoke-tests the live API.
+
+`.github/workflows/production-smoke.yml` continuously tests the real GitHub Pages production site on desktop and mobile after relevant releases and on a daily schedule.
+
+See `STAGE9-AUTONOMOUS-MAINTENANCE.md` for the full safety model, deployment architecture, one-time OAuth credential bootstrap and rollback controls.
 
 ## Data and date principles
 
@@ -72,12 +93,14 @@ The private runtime is in `apps-script/OperationsV7.gs`. See `STAGE7-OPERATIONS.
 
 Stage 8 follows the same principle: it normalises already-published public values for discovery, but does not infer missing eligibility, fee, deadline or application information.
 
+Stage 9 follows the same principle operationally: automation may apply only explicitly evidenced, high-confidence green fields. Ambiguous or higher-consequence changes remain deferred/review-only.
+
 ## Release verification
 
 See `RELEASE-VERIFICATION.md` for the Stage 5 production verification record. The live frontend also loads `stage5.js`, which performs read-only runtime release checks against the actual browser-loaded public data.
 
-Stage 8 is an additive frontend layer and is recorded in `STAGE8-FINDER-ACCURACY.md`. Its assets are included in the PWA service-worker cache.
+Stage 8 is recorded in `STAGE8-FINDER-ACCURACY.md`; Stage 9 autonomous maintenance/deployment is recorded in `STAGE9-AUTONOMOUS-MAINTENANCE.md`.
 
 ## Development rollback branches
 
-Each major production stage has a rollback branch. Stage 7 begins from `backup-pre-stage7-2026-08-24`; the Stage 8 rollback point is `backup-pre-stage8-2026-08-24`.
+Each major production stage has a rollback branch. Stage 7 begins from `backup-pre-stage7-2026-08-24`; Stage 8 begins from `backup-pre-stage8-2026-08-24`; Stage 9 begins from `backup-pre-stage9-autonomy-2026-08-24`.
