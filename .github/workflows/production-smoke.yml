@@ -6,6 +6,9 @@ on:
     paths-ignore:
       - '*.md'
       - 'apps-script/**'
+  workflow_run:
+    workflows: ['Deploy Apps Script backend']
+    types: [completed]
   schedule:
     - cron: '20 5 * * *'
   workflow_dispatch:
@@ -19,12 +22,15 @@ concurrency:
 
 jobs:
   smoke:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       PRODUCTION_URL: https://liamsomers08.github.io/Irish-Academic-Opportunities/
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - uses: actions/setup-node@v4
         with:
