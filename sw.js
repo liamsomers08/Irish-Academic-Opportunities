@@ -1,12 +1,14 @@
-const CACHE = 'irish-academic-opportunities-v2-stage1';
+const CACHE = 'irish-academic-opportunities-v3-stage2';
 const CORE = [
   './',
   './index.html',
   './config.js',
   './finder.css',
+  './upcoming.css',
   './finder-core.js',
   './finder-data.js',
   './finder-ui.js',
+  './upcoming.js',
   './manifest.webmanifest',
   './404.html'
 ];
