@@ -1,4 +1,4 @@
-const CACHE = 'irish-academic-opportunities-v5-stage4';
+const CACHE = 'irish-academic-opportunities-v6-stage5';
 const CORE = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const CORE = [
   './upcoming.js',
   './stage3.js',
   './stage4.js',
+  './stage5.js',
   './manifest.webmanifest',
   './icon.svg',
   './404.html'
