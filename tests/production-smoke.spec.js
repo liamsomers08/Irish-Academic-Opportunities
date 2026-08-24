@@ -8,12 +8,22 @@ async function waitForLiveData(page) {
   await expect(page.locator('#sc')).not.toHaveText('0');
 }
 
-async function openKnownCompetition(page) {
-  await page.locator('[data-tab="competitions"]').first().click();
+async function enterCompetitions(page) {
+  // Use the visible Discover route rather than the desktop-only header nav.
+  const route = page.locator('#home .path[data-tab="competitions"]');
+  await expect(route).toBeVisible();
+  await route.click();
   await expect(page.locator('#finder')).toBeVisible();
+  await expect(page.locator('#title')).toHaveText('Competitions');
+}
+
+async function openKnownCompetition(page) {
+  await enterCompetitions(page);
   await page.locator('#q').fill('Irish Mathematical Olympiad');
   await expect(page.locator('#resultCount')).not.toHaveText(/^0 opportunities/);
-  const detail = page.locator('[data-detail]').first();
+  // Scope the selector to rendered finder results so hidden Upcoming/home cards
+  // cannot be mistaken for the searched opportunity.
+  const detail = page.locator('#results [data-detail]').first();
   await expect(detail).toBeVisible();
   await detail.click();
   await expect(page.locator('#dialog')).toBeVisible();
@@ -33,7 +43,7 @@ test('desktop production finder core journey', async ({ page }, testInfo) => {
   await expect(page.locator('#savedCount')).toHaveText('1');
   await page.locator('#closeDialog').click();
 
-  await page.locator('[data-tab="upcoming"]').first().click();
+  await page.locator('.nav [data-tab="upcoming"]').click();
   await expect(page.locator('#upcomingHub')).toBeVisible();
   await expect(page.locator('#calendarCount')).not.toHaveText(/^0 dated events$/);
 
@@ -53,7 +63,7 @@ test('mobile production progressive disclosure and detail journey', async ({ pag
   await heroToggle.click();
   await expect(page.locator('#heroForm')).toBeVisible();
 
-  await page.locator('[data-tab="competitions"]').first().click();
+  await enterCompetitions(page);
   const refine = page.locator('#mobileRefine');
   await expect(refine).toBeVisible();
   await expect(page.locator('.filters')).not.toBeVisible();
@@ -66,10 +76,11 @@ test('mobile production progressive disclosure and detail journey', async ({ pag
   await page.locator('#schoolYear').selectOption('');
 
   await page.locator('#q').fill('Irish Mathematical Olympiad');
-  const detail = page.locator('[data-detail]').first();
+  const detail = page.locator('#results [data-detail]').first();
   await expect(detail).toBeVisible();
   await detail.click();
   await expect(page.locator('#dialog')).toBeVisible();
+  await expect(page.locator('#dtitle')).toContainText('Irish Mathematical Olympiad');
   await expect(page.getByRole('button', { name: /Report \/ update/i })).toBeVisible();
   await expect(page.locator('#dialog')).toHaveCSS('border-bottom-left-radius', '0px');
 });
