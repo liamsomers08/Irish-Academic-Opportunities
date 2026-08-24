@@ -22,6 +22,7 @@
   "shortcuts": [
     {"name": "Search all opportunities", "short_name": "Search all", "url": "./?tab=all"},
     {"name": "Upcoming dates", "short_name": "Upcoming", "url": "./?tab=upcoming"},
-    {"name": "Saved opportunities", "short_name": "Saved", "url": "./?tab=saved"}
+    {"name": "Saved opportunities", "short_name": "Saved", "url": "./?tab=saved"},
+    {"name": "For schools and guidance", "short_name": "For schools", "url": "./schools.html"}
   ]
 }
