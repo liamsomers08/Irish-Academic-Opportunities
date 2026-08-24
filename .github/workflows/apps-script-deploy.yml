@@ -51,7 +51,7 @@ jobs:
           set -euo pipefail
           for name in APPS_SCRIPT_ID GOOGLE_OAUTH_CLIENT_ID GOOGLE_OAUTH_CLIENT_SECRET GOOGLE_OAUTH_REFRESH_TOKEN; do
             if [ -z "${!name:-}" ]; then
-              echo "::error::$name is not configured. See STAGE9-AUTONOMOUS-MAINTENANCE.md for the one-time bootstrap."
+              echo "::error::$name is not configured. See DEPLOYMENT-BOOTSTRAP.md for the one-time bootstrap."
               exit 1
             fi
           done
@@ -136,10 +136,12 @@ jobs:
           node - <<'NODE'
           const fs=require('fs');
           fs.writeFileSync('/tmp/deployment.json', JSON.stringify({
-            scriptId: process.env.APPS_SCRIPT_ID,
-            versionNumber: Number(process.env.VERSION),
-            manifestFileName: 'appsscript',
-            description: `GitHub ${process.env.GITHUB_SHA} — automated production release`
+            deploymentConfig: {
+              scriptId: process.env.APPS_SCRIPT_ID,
+              versionNumber: Number(process.env.VERSION),
+              manifestFileName: 'appsscript',
+              description: `GitHub ${process.env.GITHUB_SHA} — automated production release`
+            }
           }));
           NODE
           curl --fail-with-body --silent --show-error \
