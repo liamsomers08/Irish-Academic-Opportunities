@@ -1,4 +1,4 @@
-const CACHE = 'irish-academic-opportunities-v8-qr-refresh';
+const CACHE = 'irish-academic-opportunities-v9-direct-live-qr';
 const CORE = [
   './',
   './index.html',
