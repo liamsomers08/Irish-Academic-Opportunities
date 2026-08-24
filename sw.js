@@ -1,4 +1,4 @@
-const CACHE = 'irish-academic-opportunities-v6-stage5';
+const CACHE = 'irish-academic-opportunities-v7-stage6';
 const CORE = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const CORE = [
   './upcoming.css',
   './stage3.css',
   './stage4.css',
+  './stage6.css',
   './finder-core.js',
   './finder-data.js',
   './finder-ui.js',
@@ -14,6 +15,13 @@ const CORE = [
   './stage3.js',
   './stage4.js',
   './stage5.js',
+  './schools.html',
+  './student-guide.html',
+  './about.html',
+  './launch-pack.html',
+  './launch.css',
+  './launch.js',
+  './qr-code.svg',
   './manifest.webmanifest',
   './icon.svg',
   './404.html'
@@ -38,10 +46,16 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          if (response && response.ok) caches.open(CACHE).then(cache => cache.put('./index.html', response.clone()));
+          if (response && response.ok) {
+            const path = url.pathname.endsWith('/') ? './index.html' : './' + url.pathname.split('/').pop();
+            caches.open(CACHE).then(cache => cache.put(path, response.clone()));
+          }
           return response;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(async () => {
+          const direct = await caches.match('./' + url.pathname.split('/').pop());
+          return direct || caches.match('./index.html');
+        })
     );
     return;
   }
