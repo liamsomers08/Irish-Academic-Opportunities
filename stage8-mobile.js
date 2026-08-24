@@ -2,12 +2,13 @@
 (function(){
   const byId=id=>document.getElementById(id);
   const mq=window.matchMedia('(max-width:600px)');
+  const FILTER_IDS=['typeFilter','schoolYear','subject','geography','costFilter','statusFilter','mode','opportunityType','fundingType','awardBasis','entryRoute','deadline'];
 
   function activeFilterCount(){
     let count=0;
-    try{if(byId('q')?.value.trim())count++}catch(_){}
-    try{for(const id of (window.filterIds||[])){const el=byId(id);if(el?.value)count++}}catch(_){}
-    try{if(byId('sort')?.value&&byId('sort').value!=='relevance')count++}catch(_){}
+    if(byId('q')?.value.trim())count++;
+    for(const id of FILTER_IDS){const el=byId(id);if(el?.value)count++}
+    if(byId('sort')?.value&&byId('sort').value!=='relevance')count++;
     return count;
   }
 
@@ -16,12 +17,6 @@
     const count=activeFilterCount();
     b.classList.toggle('has-active',count>0);
     const n=b.querySelector('.mobile-filter-count');if(n)n.textContent=String(count);
-  }
-
-  function closeHeroSearch(){
-    const form=byId('heroForm'),button=byId('mobileHeroSearchToggle');
-    form?.classList.remove('mobile-open');
-    if(button){button.setAttribute('aria-expanded','false');button.firstChild.textContent='Search opportunities'}
   }
 
   function ensureHeroSearch(){
@@ -65,17 +60,21 @@
   }
 
   function bindFilterChanges(){
-    const ids=['q','typeFilter','schoolYear','subject','geography','costFilter','statusFilter','mode','opportunityType','fundingType','awardBasis','entryRoute','deadline','sort'];
-    ids.forEach(id=>byId(id)?.addEventListener(id==='q'?'input':'change',()=>setTimeout(syncRefineLabel,0)));
+    ['q',...FILTER_IDS,'sort'].forEach(id=>byId(id)?.addEventListener(id==='q'?'input':'change',()=>setTimeout(syncRefineLabel,0)));
     byId('clearFilters')?.addEventListener('click',()=>setTimeout(syncRefineLabel,0));
     byId('clearTop')?.addEventListener('click',()=>setTimeout(syncRefineLabel,0));
   }
 
+  function closeRefineOnTabChange(){
+    if(!mq.matches)return;
+    document.querySelector('.filters')?.classList.remove('mobile-open');
+    document.querySelector('.search-row')?.classList.remove('mobile-expanded');
+    const b=byId('mobileRefine');if(b){b.setAttribute('aria-expanded','false');const label=b.querySelector('span');if(label)label.textContent='Filters & sort'}
+  }
+
   function improveMobileFlow(){
     ensureHeroSearch();ensureRefine();bindFilterChanges();syncRefineLabel();resetForDesktop();
-    document.addEventListener('click',e=>{
-      if(e.target.closest('[data-tab]'))setTimeout(()=>{syncRefineLabel();if(mq.matches){document.querySelector('.filters')?.classList.remove('mobile-open');document.querySelector('.search-row')?.classList.remove('mobile-expanded');const b=byId('mobileRefine');if(b){b.setAttribute('aria-expanded','false');const label=b.querySelector('span');if(label)label.textContent='Filters & sort'}}},0);
-    });
+    document.addEventListener('click',e=>{if(e.target.closest('[data-tab]'))setTimeout(()=>{syncRefineLabel();closeRefineOnTabChange()},0)});
     mq.addEventListener?.('change',resetForDesktop);
     window.addEventListener('popstate',()=>setTimeout(syncRefineLabel,0));
   }
