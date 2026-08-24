@@ -1,0 +1,11 @@
+{
+  "name": "irish-academic-opportunities",
+  "private": true,
+  "version": "9.0.0",
+  "scripts": {
+    "test:production": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
