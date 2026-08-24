@@ -1,5 +1,15 @@
 const CACHE = 'irish-academic-opportunities-v2-stage1';
-const CORE = ['./', './index.html', './config.js', './manifest.webmanifest', './404.html'];
+const CORE = [
+  './',
+  './index.html',
+  './config.js',
+  './finder.css',
+  './finder-core.js',
+  './finder-data.js',
+  './finder-ui.js',
+  './manifest.webmanifest',
+  './404.html'
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(CORE)));
