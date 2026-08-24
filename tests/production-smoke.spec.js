@@ -27,10 +27,11 @@ async function openKnownCompetition(page) {
   const detail = page.locator('#results [data-detail]').first();
   await expect(detail).toBeVisible();
   await detail.click();
-  await expect(page.locator('#dialog')).toBeVisible();
+  const dialog = page.locator('#dialog');
+  await expect(dialog).toBeVisible();
   await expect(page.locator('#dtitle')).toContainText('Irish Mathematical Olympiad');
-  await expect(page.getByRole('link', { name: /Official page/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Report \/ update/i })).toBeVisible();
+  await expect(dialog.getByRole('link', { name: /Official page/i })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: /Report \/ update/i })).toBeVisible();
 }
 
 test('desktop production finder core journey', async ({ page }, testInfo) => {
@@ -80,8 +81,9 @@ test('mobile production progressive disclosure and detail journey', async ({ pag
   const detail = page.locator('#results [data-detail]').first();
   await expect(detail).toBeVisible();
   await detail.click();
-  await expect(page.locator('#dialog')).toBeVisible();
+  const dialog = page.locator('#dialog');
+  await expect(dialog).toBeVisible();
   await expect(page.locator('#dtitle')).toContainText('Irish Mathematical Olympiad');
-  await expect(page.getByRole('button', { name: /Report \/ update/i })).toBeVisible();
-  await expect(page.locator('#dialog')).toHaveCSS('border-bottom-left-radius', '0px');
+  await expect(dialog.getByRole('button', { name: /Report \/ update/i })).toBeVisible();
+  await expect(dialog).toHaveCSS('border-bottom-left-radius', '0px');
 });
