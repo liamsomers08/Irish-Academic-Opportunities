@@ -55,6 +55,31 @@
     });
   }
 
+  function ensureFeedbackShortcut(){
+    const body=byId('dbody');if(!body)return;
+    const enhance=()=>{
+      const box=body.querySelector('.feedback-box');
+      const actions=body.querySelector('.detail-actions-row');
+      if(!box||!actions||actions.querySelector('[data-feedback-jump]'))return;
+      const button=document.createElement('button');
+      button.type='button';
+      button.className='report-action';
+      button.dataset.feedbackJump='true';
+      button.textContent='Report / update';
+      button.setAttribute('aria-label','Report a problem or suggest an update for this opportunity');
+      button.addEventListener('click',()=>{
+        const form=box.querySelector('.feedback-form');
+        form?.classList.add('on');
+        box.classList.add('feedback-open');
+        box.scrollIntoView({behavior:'smooth',block:'center'});
+        setTimeout(()=>box.querySelector('select')?.focus(),250);
+      });
+      actions.appendChild(button);
+    };
+    new MutationObserver(enhance).observe(body,{childList:true,subtree:true});
+    enhance();
+  }
+
   function resetForDesktop(){
     if(mq.matches)return;
     byId('heroForm')?.classList.remove('mobile-open');
@@ -78,7 +103,7 @@
   }
 
   function improveMobileFlow(){
-    ensureHeroSearch();ensureRefine();bindFilterChanges();syncRefineLabel();resetForDesktop();
+    ensureHeroSearch();ensureRefine();ensureFeedbackShortcut();bindFilterChanges();syncRefineLabel();resetForDesktop();
     document.addEventListener('click',e=>{if(e.target.closest('[data-tab]'))setTimeout(()=>{syncRefineLabel();closeRefineOnTabChange()},0)});
     mq.addEventListener?.('change',resetForDesktop);
     window.addEventListener('popstate',()=>setTimeout(syncRefineLabel,0));
