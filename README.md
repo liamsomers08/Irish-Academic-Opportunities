@@ -27,6 +27,24 @@ The private Google Sheet remains the maintained source of truth. A public-safe A
 
 The site includes full-text search, type-specific filters, school-year filtering, cost/geography/delivery/application filters, a unified upcoming calendar, saved opportunities, shareable views, direct opportunity URLs, printable shortlists, rich detail/provenance, related opportunities, anonymous correction reporting, mobile navigation, accessibility improvements and PWA/offline support.
 
+### Stage 8 — filter accuracy and discovery
+
+Stage 8 strengthens the finder without changing the public API or source workbook schema:
+
+- deadline horizons now use application/registration/submission deadlines rather than whichever dated event happens next
+- delivery mode is normalised into in-person, online/virtual, hybrid, other and not stated
+- entry/application routes are grouped into student-direct, school/teacher, nomination/invitation, automatic, restricted and other/not-stated routes
+- cost filtering treats TBA/varies/not-stated values conservatively instead of assuming they are paid
+- rolling/ongoing opportunities have their own status class
+- competition views add competition type and individual/team format filters
+- programme views add a residential filter
+- funding views add a financial-need filter
+- combined views expose type-specific controls once an opportunity group is selected
+- active filter chips can be removed individually
+- new `Deadline soonest` and `Open / available first` sorts support faster decision-making
+
+The Stage 8 frontend runtime is `stage8.js`, with matching styles in `stage8.css`. See `STAGE8-FINDER-ACCURACY.md` for the implementation and verification notes.
+
 ## Continuous operations
 
 Stage 7 adds an owner-facing operations layer to the private source workbook:
@@ -52,10 +70,14 @@ The private runtime is in `apps-script/OperationsV7.gs`. See `STAGE7-OPERATIONS.
 - Keep private/admin maintenance fields out of the public payload.
 - Treat the provider's official page as the final authority before an application, payment or travel decision.
 
+Stage 8 follows the same principle: it normalises already-published public values for discovery, but does not infer missing eligibility, fee, deadline or application information.
+
 ## Release verification
 
 See `RELEASE-VERIFICATION.md` for the Stage 5 production verification record. The live frontend also loads `stage5.js`, which performs read-only runtime release checks against the actual browser-loaded public data.
 
+Stage 8 is an additive frontend layer and is recorded in `STAGE8-FINDER-ACCURACY.md`. Its assets are included in the PWA service-worker cache.
+
 ## Development rollback branches
 
-Each major production stage has a rollback branch. Stage 7 begins from `backup-pre-stage7-2026-08-24`.
+Each major production stage has a rollback branch. Stage 7 begins from `backup-pre-stage7-2026-08-24`; the Stage 8 rollback point is `backup-pre-stage8-2026-08-24`.
