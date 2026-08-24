@@ -1,4 +1,4 @@
-const CACHE = 'irish-academic-opportunities-v12-mobile-density';
+const CACHE = 'irish-academic-opportunities-v13-feedback-visibility';
 const CORE = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const CORE = [
   './stage6.css',
   './stage8.css',
   './stage8-mobile.css',
+  './feedback-visibility.css',
   './finder-core.js',
   './finder-data.js',
   './finder-ui.js',
@@ -19,6 +20,7 @@ const CORE = [
   './stage5.js',
   './stage8.js',
   './stage8-mobile.js',
+  './feedback-visibility.js',
   './schools.html',
   './student-guide.html',
   './about.html',
