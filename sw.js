@@ -1,4 +1,4 @@
-const CACHE = 'irish-academic-opportunities-v11-mobile-density';
+const CACHE = 'irish-academic-opportunities-v12-mobile-density';
 const CORE = [
   './',
   './index.html',
