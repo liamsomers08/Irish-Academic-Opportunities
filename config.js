@@ -98,12 +98,11 @@ if (window.IRISH_OPPORTUNITIES_CONFIG.API_BASE_URL) {
       nativeAppend(script);
     });
 
-    // Attach a catch immediately so a failed speculative request never creates
-    // an unhandled-rejection warning. The existing loader will simply retry it.
-    cache.set(key, promise.catch((error) => {
-      cache.delete(key);
-      throw error;
-    }));
+    cache.set(key, promise);
+    // Mark speculative failures as handled immediately. The original rejected
+    // promise remains in the cache so the loader can detect it and retry the
+    // normal request without producing an unhandled-rejection warning.
+    promise.catch(() => {});
   }
 
   function launchHeavyRequests() {
