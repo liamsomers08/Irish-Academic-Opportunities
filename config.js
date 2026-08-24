@@ -1,10 +1,7 @@
 window.IRISH_OPPORTUNITIES_CONFIG = Object.freeze({
-  // Paste the deployed Google Apps Script /exec URL here after installing
-  // apps-script/PublicApi.gs and publishing a new web-app version.
-  API_BASE_URL: '',
+  API_BASE_URL: 'https://script.google.com/macros/s/AKfycbxtdwmsst7y-Olb5GKT0VtWXravSZ_4zysV5W1iybTk13DByyW3OayyvGCanhFebtRokg/exec',
 
-  // These are used only while the public API is not connected.
-  // They reflect the live master summary checked on 23/24 August 2026.
+  // These are used only if the public API cannot be reached.
   FALLBACK_COUNTS: {
     competitions: 268,
     programmes: 345,
