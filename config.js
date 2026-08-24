@@ -177,6 +177,32 @@ if (window.IRISH_OPPORTUNITIES_CONFIG.API_BASE_URL) {
   };
 })();
 
+// Stage 8 mobile polish is loaded as an isolated enhancement layer so desktop
+// behavior and the existing finder/data pipeline remain unchanged.
+(function loadStage8MobilePolish() {
+  if (!document.querySelector('link[data-stage8-mobile]')) {
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = './stage8-mobile.css';
+    css.dataset.stage8Mobile = 'true';
+    document.head.appendChild(css);
+  }
+
+  const loadScript = () => {
+    if (document.querySelector('script[data-stage8-mobile]')) return;
+    const script = document.createElement('script');
+    script.src = './stage8-mobile.js';
+    script.dataset.stage8Mobile = 'true';
+    document.body.appendChild(script);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadScript, { once: true });
+  } else {
+    loadScript();
+  }
+})();
+
 // Stage 5 release verification is intentionally loaded after the production
 // application has completed its normal startup so it observes the real mapped
 // datasets instead of racing the loader.
