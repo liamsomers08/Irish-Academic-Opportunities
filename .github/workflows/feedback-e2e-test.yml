@@ -1,0 +1,19 @@
+name: One-time feedback E2E test
+
+on:
+  push:
+    branches:
+      - backup-pre-mobile-polish-2026-08-24
+
+jobs:
+  submit-feedback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit harmless test feedback to live Apps Script endpoint
+        shell: bash
+        run: |
+          curl --fail-with-body --silent --show-error --location \
+            -X POST \
+            -H 'Content-Type: text/plain;charset=UTF-8' \
+            --data '{"action":"feedback","payload":{"id":"C001","opportunityId":"C001","kind":"competitions","opportunityType":"Competition","opportunityName":"Irish Mathematical Olympiad (IrMO)","title":"Irish Mathematical Olympiad (IrMO)","issueType":"Suggestion","category":"Suggestion","message":"Automated end-to-end feedback test from the production release check. No data correction is required; this item can be marked Resolved after verification.","sourceUrl":"https://www.irmo.ie/","pageUrl":"https://liamsomers08.github.io/Irish-Academic-Opportunities/?tab=all&id=C001","submittedAt":"2026-08-24T22:47:00+01:00"}}' \
+            'https://script.google.com/macros/s/AKfycbxtdwmsst7y-Olb5GKT0VtWXravSZ_4zysV5W1iybTk13DByyW3OayyvGCanhFebtRokg/exec'
