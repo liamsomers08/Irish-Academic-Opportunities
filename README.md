@@ -27,6 +27,22 @@ The private Google Sheet remains the maintained source of truth. A public-safe A
 
 The site includes full-text search, type-specific filters, school-year filtering, cost/geography/delivery/application filters, a unified upcoming calendar, saved opportunities, shareable views, direct opportunity URLs, printable shortlists, rich detail/provenance, related opportunities, anonymous correction reporting, mobile navigation, accessibility improvements and PWA/offline support.
 
+## Continuous operations
+
+Stage 7 adds an owner-facing operations layer to the private source workbook:
+
+- combined Operations Dashboard and review queue
+- competition/programme/funding source monitoring
+- funding monitor/queue/log parity with the older competition and programme monitors
+- rotating baseline and freshness checks
+- explicit manual-monitor handling for anti-bot/403/429/low-content sources
+- two-successful-check confirmation before a changed source fingerprint is queued
+- stale verification and status/deadline review signals
+- feedback aggregation when the V3 Feedback Queue exists
+- operations run logging and scheduled daily/fortnightly workflows
+
+The private runtime is in `apps-script/OperationsV7.gs`. See `STAGE7-OPERATIONS.md` for the installation and review runbook. Monitoring findings never directly overwrite the public master records.
+
 ## Data and date principles
 
 - Prefer official provider/organiser sources.
@@ -42,4 +58,4 @@ See `RELEASE-VERIFICATION.md` for the Stage 5 production verification record. Th
 
 ## Development rollback branches
 
-Each major production stage has a rollback branch. Stage 6 begins from `backup-pre-stage6-2026-08-24`.
+Each major production stage has a rollback branch. Stage 7 begins from `backup-pre-stage7-2026-08-24`.
