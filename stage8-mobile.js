@@ -2,7 +2,11 @@
 (function(){
   const byId=id=>document.getElementById(id);
   const mq=window.matchMedia('(max-width:600px)');
-  const FILTER_IDS=['typeFilter','schoolYear','subject','geography','costFilter','statusFilter','mode','opportunityType','fundingType','awardBasis','entryRoute','deadline'];
+  const FILTER_IDS=[
+    'typeFilter','schoolYear','subject','geography','costFilter','statusFilter','mode',
+    'opportunityType','fundingType','awardBasis','entryRoute','deadline',
+    'competitionTypeFilter','competitionFormatFilter','residentialFilter','financialNeedFilter'
+  ];
 
   function activeFilterCount(){
     let count=0;
@@ -37,9 +41,10 @@
   function ensureRefine(){
     const row=document.querySelector('.search-row'),filters=document.querySelector('.filters');
     if(!row||!filters||byId('mobileRefine'))return;
+    if(!filters.id)filters.id='mobileFilters';
     const button=document.createElement('button');
     button.id='mobileRefine';button.className='mobile-refine-toggle';button.type='button';
-    button.setAttribute('aria-controls','filters');button.setAttribute('aria-expanded','false');
+    button.setAttribute('aria-controls',filters.id);button.setAttribute('aria-expanded','false');
     button.innerHTML='<span>Filters & sort</span><span class="mobile-filter-count" aria-hidden="true">0</span>';
     const q=byId('q');if(q&&q.nextSibling)row.insertBefore(button,q.nextSibling);else row.appendChild(button);
     button.addEventListener('click',()=>{
