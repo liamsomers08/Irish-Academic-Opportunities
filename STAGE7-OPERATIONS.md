@@ -24,11 +24,11 @@ The maintained Google Sheet now includes:
 - `Operations Review Queue` — combined competition/programme/funding/feedback review queue
 - `Operations Run Log` — scheduled-run metrics and outcomes
 
-The existing competition and programme monitor/queue/log architecture is retained.
+The existing competition and programme monitor/queue/log architecture is retained. During Stage 7 the competition monitor was reconciled with the expanded master and C347–C354 were added as pending baselines. `OperationsV7.gs` also rechecks competition monitor coverage on install and before daily/baseline runs so future additions are automatically brought into the monitor when they have a usable official/current source.
 
 ### Current operations backlog at Stage 7 creation
 
-- Competition pending baselines: 77
+- Competition pending baselines: 85
 - Competition fetch-error rows: 16
 - Competition open monitor items: 15
 - Programme pending baselines: 275
@@ -150,4 +150,4 @@ Stage 7 workbook additions are operational/admin layers only; the public Stage 1
 
 ## Deployment boundary
 
-The Google Sheet structure and GitHub Stage 7 runtime are prepared in this release. The connected tools used to build this stage do not expose the bound Apps Script project itself, so the one-time `OperationsV7.gs` install and `stage7Install()` execution must be performed in the existing Apps Script editor before the scheduled source checks are considered active.
+The Google Sheet structure and GitHub Stage 7 runtime are prepared in this release. The connected tools used to build this stage do not expose the bound Apps Script project itself, and a plugin search found no available Apps Script integration. Therefore the one-time `OperationsV7.gs` install and `stage7Install()` execution must be performed in the existing Apps Script editor before the scheduled source checks are considered active.
