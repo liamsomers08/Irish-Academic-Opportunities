@@ -86,3 +86,20 @@
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',improveMobileFlow,{once:true});else improveMobileFlow();
 })();
+
+/* Load the feedback-visibility enhancement on every device. */
+(function(){
+  if(!document.querySelector('link[data-feedback-visibility]')){
+    const css=document.createElement('link');
+    css.rel='stylesheet';
+    css.href='./feedback-visibility.css';
+    css.dataset.feedbackVisibility='true';
+    document.head.appendChild(css);
+  }
+  if(!document.querySelector('script[data-feedback-visibility]')){
+    const script=document.createElement('script');
+    script.src='./feedback-visibility.js';
+    script.dataset.feedbackVisibility='true';
+    document.body.appendChild(script);
+  }
+})();
