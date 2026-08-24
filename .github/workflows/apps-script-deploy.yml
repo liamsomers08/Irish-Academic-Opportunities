@@ -1,0 +1,163 @@
+name: Deploy Apps Script backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps-script/**'
+      - 'scripts/merge-apps-script-content.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apps-script-production
+  cancel-in-progress: false
+
+env:
+  WEBAPP_DEPLOYMENT_ID: AKfycbxtdwmsst7y-Olb5GKT0VtWXravSZ_4zysV5W1iybTk13DByyW3OayyvGCanhFebtRokg
+  WEBAPP_URL: https://script.google.com/macros/s/AKfycbxtdwmsst7y-Olb5GKT0VtWXravSZ_4zysV5W1iybTk13DByyW3OayyvGCanhFebtRokg/exec
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate managed Apps Script syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/apps-script-check
+          for file in apps-script/*.gs; do
+            cp "$file" "/tmp/apps-script-check/$(basename "$file").js"
+            node --check "/tmp/apps-script-check/$(basename "$file").js"
+          done
+
+      - name: Verify deployment credentials are configured
+        env:
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          GOOGLE_OAUTH_REFRESH_TOKEN: ${{ secrets.GOOGLE_OAUTH_REFRESH_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in APPS_SCRIPT_ID GOOGLE_OAUTH_CLIENT_ID GOOGLE_OAUTH_CLIENT_SECRET GOOGLE_OAUTH_REFRESH_TOKEN; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::$name is not configured. See STAGE9-AUTONOMOUS-MAINTENANCE.md for the one-time bootstrap."
+              exit 1
+            fi
+          done
+
+      - name: Obtain Google OAuth access token
+        id: oauth
+        env:
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          GOOGLE_OAUTH_REFRESH_TOKEN: ${{ secrets.GOOGLE_OAUTH_REFRESH_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            -X POST https://oauth2.googleapis.com/token \
+            -d client_id="$GOOGLE_OAUTH_CLIENT_ID" \
+            -d client_secret="$GOOGLE_OAUTH_CLIENT_SECRET" \
+            -d refresh_token="$GOOGLE_OAUTH_REFRESH_TOKEN" \
+            -d grant_type=refresh_token > /tmp/token.json
+          ACCESS_TOKEN=$(node -e "const j=require('/tmp/token.json'); if(!j.access_token) process.exit(2); process.stdout.write(j.access_token)")
+          echo "::add-mask::$ACCESS_TOKEN"
+          echo "access_token=$ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Pull current bound Apps Script project
+        env:
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+          ACCESS_TOKEN: ${{ steps.oauth.outputs.access_token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            "https://script.googleapis.com/v1/projects/$APPS_SCRIPT_ID/content" \
+            -o /tmp/remote-content.json
+          node -e "const j=require('/tmp/remote-content.json'); if(!Array.isArray(j.files)||!j.files.length) throw new Error('Remote project content is empty')"
+
+      - name: Overlay GitHub-managed backend files without deleting remote files
+        run: node scripts/merge-apps-script-content.mjs /tmp/remote-content.json apps-script /tmp/merged-content.json
+
+      - name: Update Apps Script HEAD
+        env:
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+          ACCESS_TOKEN: ${{ steps.oauth.outputs.access_token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            -X PUT \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data-binary @/tmp/merged-content.json \
+            "https://script.googleapis.com/v1/projects/$APPS_SCRIPT_ID/content" \
+            -o /tmp/update-result.json
+
+      - name: Create immutable Apps Script version
+        id: version
+        env:
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+          ACCESS_TOKEN: ${{ steps.oauth.outputs.access_token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "require('fs').writeFileSync('/tmp/version-request.json', JSON.stringify({description:'GitHub '+process.env.GITHUB_SHA+' — automated production release'}))"
+          curl --fail-with-body --silent --show-error \
+            -X POST \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data-binary @/tmp/version-request.json \
+            "https://script.googleapis.com/v1/projects/$APPS_SCRIPT_ID/versions" \
+            -o /tmp/version.json
+          VERSION=$(node -e "const j=require('/tmp/version.json'); if(!j.versionNumber) process.exit(2); process.stdout.write(String(j.versionNumber))")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Point existing public web-app deployment to new version
+        env:
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+          ACCESS_TOKEN: ${{ steps.oauth.outputs.access_token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs=require('fs');
+          fs.writeFileSync('/tmp/deployment.json', JSON.stringify({
+            scriptId: process.env.APPS_SCRIPT_ID,
+            versionNumber: Number(process.env.VERSION),
+            manifestFileName: 'appsscript',
+            description: `GitHub ${process.env.GITHUB_SHA} — automated production release`
+          }));
+          NODE
+          curl --fail-with-body --silent --show-error \
+            -X PUT \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data-binary @/tmp/deployment.json \
+            "https://script.googleapis.com/v1/projects/$APPS_SCRIPT_ID/deployments/$WEBAPP_DEPLOYMENT_ID" \
+            -o /tmp/deployment-result.json
+
+      - name: Smoke-check public Apps Script API
+        shell: bash
+        run: |
+          set -euo pipefail
+          body=$(curl --fail-with-body --silent --show-error --retry 4 --retry-delay 4 \
+            "$WEBAPP_URL?api=bootstrap&callback=iao_ci")
+          printf '%s' "$body" | grep -q 'iao_ci('
+          printf '%s' "$body" | grep -q 'competitions'
+          printf '%s' "$body" | grep -q 'programmes'
+          printf '%s' "$body" | grep -q 'scholarships'
+          echo "Apps Script deployment ${WEBAPP_DEPLOYMENT_ID} version ${{ steps.version.outputs.version }} passed the live bootstrap smoke check."
