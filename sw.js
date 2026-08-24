@@ -1,4 +1,4 @@
-const CACHE = 'irish-academic-opportunities-v10-stage8-finder';
+const CACHE = 'irish-academic-opportunities-v11-mobile-density';
 const CORE = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const CORE = [
   './stage4.css',
   './stage6.css',
   './stage8.css',
+  './stage8-mobile.css',
   './finder-core.js',
   './finder-data.js',
   './finder-ui.js',
@@ -17,6 +18,7 @@ const CORE = [
   './stage4.js',
   './stage5.js',
   './stage8.js',
+  './stage8-mobile.js',
   './schools.html',
   './student-guide.html',
   './about.html',
