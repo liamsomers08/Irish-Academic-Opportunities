@@ -14,6 +14,30 @@ window.IRISH_OPPORTUNITIES_CONFIG = Object.freeze({
   SITE_NAME: 'Irish Academic Opportunities Finder'
 });
 
+// A corrupted local save value should never be able to stop the application
+// before its UI loads.
+try {
+  const stored = JSON.parse(localStorage.getItem('iao_saved') || '[]');
+  if (!Array.isArray(stored)) localStorage.removeItem('iao_saved');
+} catch (_) {
+  localStorage.removeItem('iao_saved');
+}
+
+function syncVerifiedFallbackCounts_() {
+  const c = window.IRISH_OPPORTUNITIES_CONFIG.FALLBACK_COUNTS;
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(value);
+  };
+  set('cc', c.competitions);
+  set('pc', c.programmes);
+  set('sc', c.scholarships);
+  set('total', c.competitions + c.programmes + c.scholarships);
+}
+
+syncVerifiedFallbackCounts_();
+document.addEventListener('DOMContentLoaded', syncVerifiedFallbackCounts_, { once: true });
+
 // Make the loading state explicit while the live Apps Script API responds.
 if (window.IRISH_OPPORTUNITIES_CONFIG.API_BASE_URL) {
   const markConnecting = () => {
@@ -152,3 +176,14 @@ if (window.IRISH_OPPORTUNITIES_CONFIG.API_BASE_URL) {
     return node;
   };
 })();
+
+// Stage 5 release verification is intentionally loaded after the production
+// application has completed its normal startup so it observes the real mapped
+// datasets instead of racing the loader.
+window.addEventListener('load', () => {
+  if (document.querySelector('script[data-stage5-release-guard]')) return;
+  const script = document.createElement('script');
+  script.src = './stage5.js';
+  script.dataset.stage5ReleaseGuard = 'true';
+  document.body.appendChild(script);
+}, { once: true });
