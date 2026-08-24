@@ -1,4 +1,4 @@
-const CACHE = 'irish-academic-opportunities-v9-direct-live-qr';
+const CACHE = 'irish-academic-opportunities-v10-stage8-finder';
 const CORE = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const CORE = [
   './stage3.css',
   './stage4.css',
   './stage6.css',
+  './stage8.css',
   './finder-core.js',
   './finder-data.js',
   './finder-ui.js',
@@ -15,6 +16,7 @@ const CORE = [
   './stage3.js',
   './stage4.js',
   './stage5.js',
+  './stage8.js',
   './schools.html',
   './student-guide.html',
   './about.html',
