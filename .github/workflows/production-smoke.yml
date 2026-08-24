@@ -27,6 +27,7 @@ jobs:
     timeout-minutes: 20
     env:
       PRODUCTION_URL: https://liamsomers08.github.io/Irish-Academic-Opportunities/
+      RELEASE_MARKER: 'feedback-visibility.js" data-feedback-visibility="true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,17 +37,18 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Wait for GitHub Pages production origin
+      - name: Wait for current GitHub Pages release
         shell: bash
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 18); do
-            if curl --fail --silent --show-error --location "$PRODUCTION_URL" | grep -q 'Irish Academic Opportunities Finder'; then
+          for attempt in $(seq 1 30); do
+            page="$(curl --fail --silent --show-error --location "$PRODUCTION_URL" || true)"
+            if printf '%s' "$page" | grep -Fq "$RELEASE_MARKER"; then
               exit 0
             fi
             sleep 10
           done
-          echo '::error::Production GitHub Pages origin did not become healthy.'
+          echo '::error::Current GitHub Pages release marker did not become available.'
           exit 1
 
       - name: Install test dependencies
