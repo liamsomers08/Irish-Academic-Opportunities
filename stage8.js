@@ -265,8 +265,10 @@
   function s8ApplyFilterVisibility(base) {
     const kind = s8KindSelection(base);
     const selectedOne = !!kind;
+    const specificTab = ['competitions', 'programmes', 'scholarships'].includes(tab);
 
-    $('typeFilter')?.classList.toggle('hide', ['competitions', 'programmes', 'scholarships'].includes(tab));
+    if (specificTab && $('typeFilter')?.value) $('typeFilter').value = '';
+    $('typeFilter')?.classList.toggle('hide', specificTab);
 
     s8ToggleWrap('modeWrap', kind === 'programmes', 'mode');
     s8ToggleWrap('opportunityWrap', kind === 'programmes', 'opportunityType');
@@ -435,7 +437,7 @@
 
     for (const id of filterIds) {
       const el = $(id);
-      if (!el?.value) continue;
+      if (!el?.value || el.classList.contains('hide')) continue;
       const field = el.closest('.field');
       if (field?.classList.contains('hide')) continue;
       pairs.push({
@@ -503,5 +505,18 @@
     financialNeedClass: s8FinancialNeedClass,
     deadlineCandidates: s8DeadlineCandidates,
     nextDeadline: s8NextDeadline
+  });
+
+  /* If live data completed unusually quickly before this script ran, refresh once
+     so the normalized controls and Stage 8 URL parameters are still applied. */
+  requestAnimationFrame(() => {
+    if (tab === 'home') return;
+    const params = new URLSearchParams(location.search);
+    stage8FilterIds.forEach(id => {
+      const value = params.get(id);
+      const el = $(id);
+      if (value && el && [...el.options].some(o => o.value === value)) el.value = value;
+    });
+    renderFinder();
   });
 })();
