@@ -1,4 +1,4 @@
-const CACHE = 'irish-academic-opportunities-v7-stage6';
+const CACHE = 'irish-academic-opportunities-v8-qr-refresh';
 const CORE = [
   './',
   './index.html',
@@ -22,6 +22,7 @@ const CORE = [
   './launch.css',
   './launch.js',
   './qr-code.svg',
+  './qr-poster.pdf',
   './manifest.webmanifest',
   './icon.svg',
   './404.html'
