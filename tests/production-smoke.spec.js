@@ -12,6 +12,13 @@ async function waitForLiveData(page) {
   await expect(page.locator('#sc')).not.toHaveText('0');
 }
 
+async function assertSingleReleaseVerifier(page) {
+  await expect.poll(
+    async () => page.locator('script[src$="stage5.js"]').count(),
+    { timeout: 10_000 }
+  ).toBe(1);
+}
+
 async function enterCompetitions(page) {
   // Use the visible Discover route rather than the desktop-only header nav.
   const route = page.locator('#home .path[data-tab="competitions"]');
@@ -42,6 +49,7 @@ test('desktop production finder core journey', async ({ page }, testInfo) => {
   await page.goto('./', { waitUntil: 'domcontentloaded' });
   await expect(page).toHaveTitle(/Irish Academic Opportunities Finder/);
   await waitForLiveData(page);
+  await assertSingleReleaseVerifier(page);
   await openKnownCompetition(page);
 
   await page.locator('#dialog [data-save]').click();
@@ -61,6 +69,7 @@ test('mobile production progressive disclosure and detail journey', async ({ pag
   test.skip(testInfo.project.name !== 'mobile-chromium');
   await page.goto('./', { waitUntil: 'domcontentloaded' });
   await waitForLiveData(page);
+  await assertSingleReleaseVerifier(page);
 
   const heroToggle = page.locator('#mobileHeroSearchToggle');
   await expect(heroToggle).toBeVisible();
