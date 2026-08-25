@@ -203,11 +203,15 @@ if (window.IRISH_OPPORTUNITIES_CONFIG.API_BASE_URL) {
   }
 })();
 
-// Stage 5 release verification is intentionally loaded after the production
-// application has completed its normal startup so it observes the real mapped
-// datasets instead of racing the loader.
+// Stage 5 release verification should run exactly once. index.html already
+// declares stage5.js, so do not inject a second copy after window load. The
+// fallback injection remains for pages that use this config without declaring it.
 window.addEventListener('load', () => {
-  if (document.querySelector('script[data-stage5-release-guard]')) return;
+  const alreadyDeclared = [...document.scripts].some((script) => {
+    const src = script.getAttribute('src') || '';
+    return /(?:^|\/)stage5\.js(?:[?#]|$)/.test(src);
+  });
+  if (alreadyDeclared || document.querySelector('script[data-stage5-release-guard]')) return;
   const script = document.createElement('script');
   script.src = './stage5.js';
   script.dataset.stage5ReleaseGuard = 'true';
