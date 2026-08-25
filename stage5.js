@@ -12,7 +12,7 @@
   const started=Date.now();
 
   const result={
-    version:'stage5-2026-08-25',
+    version:'stage5-2026-08-25b',
     checkedAt:'',
     mode:'pending',
     counts:{},
@@ -58,7 +58,7 @@
     const text=document.getElementById('siteNoticeText');
     const action=document.getElementById('siteNoticeAction');
     if(!box||!text)return;
-    if(/Release verification detected incomplete live opportunity data/i.test(text.textContent||'')){
+    if(/Release verification detected incomplete live opportunity data|Live opportunity data could not be loaded completely/i.test(text.textContent||'')){
       text.textContent='';
       box.className='site-notice';
       if(action){action.classList.add('hide');action.onclick=null}
@@ -70,6 +70,25 @@
   }
   function datasetSnapshot(){
     const snap={competitions:[],programmes:[],scholarships:[]};
+
+    // allData() is the finder application's own public, mapped dataset source.
+    // Use it first so release verification checks exactly what users can search.
+    try{
+      if(typeof allData==='function'){
+        const records=allData();
+        if(Array.isArray(records)&&records.length){
+          for(const record of records){
+            const kind=String(record?.kind||'').toLowerCase();
+            if(kind==='competitions')snap.competitions.push(record);
+            else if(kind==='programmes')snap.programmes.push(record);
+            else if(kind==='scholarships')snap.scholarships.push(record);
+          }
+          return snap;
+        }
+      }
+    }catch(_){}
+
+    // Backward-compatible fallback for older builds where allData() is absent.
     try{
       if(typeof data==='object'&&data){
         snap.competitions=Array.isArray(data.competitions)?data.competitions:[];
