@@ -6,7 +6,7 @@ async function waitForLiveData(page) {
   await expect.poll(
     async () => page.evaluate(() => (typeof allData === 'function' ? allData().length : 0)),
     { timeout: 45_000 }
-  ).toBeGreaterThanOrEqual(1000);
+  ).toBeGreaterThan(0);
   await expect(page.locator('#cc')).not.toHaveText('0');
   await expect(page.locator('#pc')).not.toHaveText('0');
   await expect(page.locator('#sc')).not.toHaveText('0');
@@ -17,6 +17,20 @@ async function assertSingleReleaseVerifier(page) {
     async () => page.locator('script[src$="stage5.js"]').count(),
     { timeout: 10_000 }
   ).toBe(1);
+}
+
+async function assertReleaseHealth(page) {
+  await expect.poll(
+    async () => page.evaluate(() => ({
+      mode: window.IAO_RELEASE_HEALTH?.mode || '',
+      ready: window.IAO_RELEASE_HEALTH?.releaseReady === true,
+      criticalFailures: (window.IAO_RELEASE_HEALTH?.checks || []).filter(x => x?.severity === 'critical' && !x?.pass).map(x => x.name)
+    })),
+    { timeout: 35_000 }
+  ).toMatchObject({ mode: 'live', ready: true, criticalFailures: [] });
+
+  await expect(page.getByText('Release verification detected incomplete live opportunity data.', { exact: false })).toHaveCount(0);
+  await expect(page.locator('#siteNotice.site-notice.on.error')).toHaveCount(0);
 }
 
 async function enterCompetitions(page) {
@@ -50,6 +64,7 @@ test('desktop production finder core journey', async ({ page }, testInfo) => {
   await expect(page).toHaveTitle(/Irish Academic Opportunities Finder/);
   await waitForLiveData(page);
   await assertSingleReleaseVerifier(page);
+  await assertReleaseHealth(page);
   await openKnownCompetition(page);
 
   await page.locator('#dialog [data-save]').click();
@@ -70,6 +85,7 @@ test('mobile production progressive disclosure and detail journey', async ({ pag
   await page.goto('./', { waitUntil: 'domcontentloaded' });
   await waitForLiveData(page);
   await assertSingleReleaseVerifier(page);
+  await assertReleaseHealth(page);
 
   const heroToggle = page.locator('#mobileHeroSearchToggle');
   await expect(heroToggle).toBeVisible();
