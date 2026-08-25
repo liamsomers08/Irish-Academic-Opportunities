@@ -203,6 +203,25 @@ if (window.IRISH_OPPORTUNITIES_CONFIG.API_BASE_URL) {
   }
 })();
 
+// Geographic search is a post-core enhancement. Loading at DOMContentLoaded
+// guarantees finder-data.js has declared its matching/scoring functions before
+// this layer extends them, while still being ready before a user can search.
+(function loadGeographicSearch() {
+  const loadScript = () => {
+    if (document.querySelector('script[data-geographic-search]')) return;
+    const script = document.createElement('script');
+    script.src = './geo-search.js';
+    script.dataset.geographicSearch = 'true';
+    document.body.appendChild(script);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadScript, { once: true });
+  } else {
+    loadScript();
+  }
+})();
+
 // Stage 5 release verification should run exactly once. index.html already
 // declares stage5.js, so do not inject a second copy after window load. The
 // fallback injection remains for pages that use this config without declaring it.
