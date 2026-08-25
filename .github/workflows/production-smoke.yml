@@ -27,7 +27,8 @@ jobs:
     timeout-minutes: 20
     env:
       PRODUCTION_URL: https://liamsomers08.github.io/Irish-Academic-Opportunities/
-      RELEASE_MARKER: 'stage5-2026-08-25c'
+      RELEASE_FILE: geo-search.js
+      RELEASE_MARKER: 'geo-search-2026-08-25a'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,13 +43,13 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in $(seq 1 30); do
-            script="$(curl --fail --silent --show-error --location "${PRODUCTION_URL}stage5.js" || true)"
+            script="$(curl --fail --silent --show-error --location "${PRODUCTION_URL}${RELEASE_FILE}" || true)"
             if printf '%s' "$script" | grep -Fq "$RELEASE_MARKER"; then
               exit 0
             fi
             sleep 10
           done
-          echo '::error::Current stage5.js release marker did not become available.'
+          echo "::error::Current ${RELEASE_FILE} release marker did not become available."
           exit 1
 
       - name: Install test dependencies
