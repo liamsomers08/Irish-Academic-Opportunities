@@ -1,4 +1,4 @@
-const CACHE = 'irish-academic-opportunities-v17-release-readiness';
+const CACHE = 'irish-academic-opportunities-v18-geographic-search';
 const CORE = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const CORE = [
   './feedback-visibility.css',
   './finder-core.js',
   './finder-data.js',
+  './geo-search.js',
   './finder-ui.js',
   './upcoming.js',
   './stage3.js',
