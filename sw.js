@@ -1,4 +1,4 @@
-const CACHE = 'irish-academic-opportunities-v15-release-verifier';
+const CACHE = 'irish-academic-opportunities-v16-release-verifier';
 const CORE = [
   './',
   './index.html',
