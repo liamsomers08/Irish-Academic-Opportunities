@@ -33,6 +33,48 @@ async function assertReleaseHealth(page) {
   await expect(page.locator('#siteNotice.site-notice.on.error')).toHaveCount(0);
 }
 
+async function assertGeographicSearch(page) {
+  await expect.poll(
+    async () => page.evaluate(() => window.IAO_GEO_SEARCH?.VERSION || ''),
+    { timeout: 15_000 }
+  ).toBe('geo-search-2026-08-25a');
+
+  const geo = await page.evaluate(() => {
+    const byId = id => allData().find(x => x.id === id);
+    const counties = ['Carlow','Cavan','Clare','Cork','Donegal','Dublin','Galway','Kerry','Kildare','Kilkenny','Laois','Leitrim','Limerick','Longford','Louth','Mayo','Meath','Monaghan','Offaly','Roscommon','Sligo','Tipperary','Waterford','Westmeath','Wexford','Wicklow','Antrim','Armagh','Down','Fermanagh','Derry','Tyrone'];
+    return {
+      unresolvedCounties: counties.filter(county => !window.IAO_GEO_SEARCH.resolve(county)?.counties?.includes(county)),
+      newbridgeCounty: window.IAO_GEO_SEARCH.resolve('Newbridge')?.counties?.[0] || '',
+      naasCounty: window.IAO_GEO_SEARCH.resolve('Naas TY')?.counties?.[0] || '',
+      naasRemainder: window.IAO_GEO_SEARCH.resolve('Naas TY')?.remainder || '',
+      belfastRegion: window.IAO_GEO_SEARCH.resolve('Belfast')?.regions?.[0] || '',
+      kildareLocalProgramme: matchesQuery(byId('P042'), 'Newbridge'),
+      dublinOnlyProgramme: matchesQuery(byId('P001'), 'Newbridge'),
+      nationalCompetition: matchesQuery(byId('C001'), 'Newbridge'),
+      limerickRestrictedCompetition: matchesQuery(byId('C002'), 'Newbridge')
+    };
+  });
+
+  expect(geo.unresolvedCounties).toEqual([]);
+  expect(geo.newbridgeCounty).toBe('Kildare');
+  expect(geo.naasCounty).toBe('Kildare');
+  expect(geo.naasRemainder).toBe('ty');
+  expect(geo.belfastRegion).toBe('Northern Ireland');
+  expect(geo.kildareLocalProgramme).toBe(true);
+  expect(geo.dublinOnlyProgramme).toBe(false);
+  expect(geo.nationalCompetition).toBe(true);
+  expect(geo.limerickRestrictedCompetition).toBe(false);
+
+  await page.locator('.nav [data-tab="all"]').click();
+  await page.locator('#q').fill('Newbridge');
+  await expect(page.locator('#resultCount')).not.toHaveText(/^0 opportunities/);
+  await expect(page.locator('#results [data-detail="P042"]')).toBeVisible();
+
+  await page.locator('#q').fill('Kildare TY');
+  await expect(page.locator('#resultCount')).not.toHaveText(/^0 opportunities/);
+  await expect(page.locator('#results [data-detail="P042"]')).toBeVisible();
+}
+
 async function enterCompetitions(page) {
   // Use the visible Discover route rather than the desktop-only header nav.
   const route = page.locator('#home .path[data-tab="competitions"]');
@@ -65,6 +107,9 @@ test('desktop production finder core journey', async ({ page }, testInfo) => {
   await waitForLiveData(page);
   await assertSingleReleaseVerifier(page);
   await assertReleaseHealth(page);
+  await assertGeographicSearch(page);
+  await page.goto('./', { waitUntil: 'domcontentloaded' });
+  await waitForLiveData(page);
   await openKnownCompetition(page);
 
   await page.locator('#dialog [data-save]').click();
