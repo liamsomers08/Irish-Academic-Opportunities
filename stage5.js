@@ -1,11 +1,12 @@
 /* Stage 5 production release guard.
- * Read-only diagnostics for the public finder. It must never raise a user-facing
- * error banner; the finder loader itself owns genuine live-data fallback UX.
+ * Read-only diagnostics plus a defensive browser-side publication gate for the
+ * public finder. Internal review / excluded records must never be shown merely
+ * because an older Apps Script deployment returned them.
  */
 (function stage5ReleaseVerification(){
   const MAX_WAIT_MS=45000;
   const started=Date.now();
-  const result={version:'stage5-2026-08-25c',checkedAt:'',mode:'pending',counts:{},checks:[],relatedApi:'not-tested',releaseReady:false};
+  const result={version:'stage5-2026-08-26-evidence-gate',checkedAt:'',mode:'pending',counts:{},checks:[],relatedApi:'not-tested',releaseReady:false,publicationGate:null};
   window.IAO_RELEASE_HEALTH=result;
 
   const add=(name,pass,detail='',severity='warning')=>{result.checks.push({name,pass:Boolean(pass),detail,severity});return Boolean(pass)};
@@ -15,6 +16,49 @@
   const idsPresent=arr=>arr.every(x=>String(x?.id||'').trim().length>0);
   const uniqueIds=arr=>{const ids=arr.map(x=>String(x?.id||'').trim()).filter(Boolean);return ids.length===arr.length&&ids.length===new Set(ids).size};
   const richFields=(record,fields)=>Boolean(record)&&fields.every(field=>Array.isArray(field)?field.some(k=>meaningful(record[k])):meaningful(record[field]));
+  const gateCanon=value=>String(value??'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  const gateYes=value=>/^(yes|true|y|1)$/.test(gateCanon(value));
+
+  function publicRecordAllowed(record,kind){
+    if(!record||typeof record!=='object')return false;
+    if(kind==='competitions')return gateCanon(record.status||record.currentStatus)==='available';
+
+    const finderEligible=record.finderEligible;
+    if(meaningful(finderEligible)&&!gateYes(finderEligible))return false;
+
+    if(kind==='programmes'){
+      const state=gateCanon([record.programmeStatus,record.applicationStatus,record.status].filter(Boolean).join(' '));
+      if(/needsreview|underreview|unverified|notavailable|evidenceincomplete|notpubliclyverified/.test(state))return false;
+    }
+    return true;
+  }
+
+  function enforcePublicationGate(){
+    try{
+      if(typeof data!=='object'||!data)return {applied:false,removed:0,detail:'Finder data object unavailable'};
+      const before={},after={};let removed=0;
+      ['competitions','programmes','scholarships'].forEach(kind=>{
+        const list=Array.isArray(data[kind])?data[kind]:[];
+        before[kind]=list.length;
+        const filtered=list.filter(record=>publicRecordAllowed(record,kind));
+        removed+=list.length-filtered.length;
+        data[kind]=filtered;
+        after[kind]=filtered.length;
+      });
+
+      const allowedIds=new Set([...data.competitions,...data.programmes,...data.scholarships].map(x=>String(x?.id||'').trim()).filter(Boolean));
+      if(Array.isArray(upcoming))upcoming=upcoming.filter(x=>{const id=String(x?.id||'').trim();return !id||allowedIds.has(id)});
+
+      if(typeof setCounts==='function')setCounts(after);
+      if(typeof renderUpcoming==='function')renderUpcoming();
+      if(typeof refreshSaved==='function')refreshSaved();
+
+      const detail='Public gate '+before.competitions+'→'+after.competitions+' competitions, '+before.programmes+'→'+after.programmes+' programmes, '+before.scholarships+'→'+after.scholarships+' funding records; '+removed+' excluded.';
+      return {applied:true,removed,before,after,detail};
+    }catch(err){
+      return {applied:false,removed:0,detail:'Publication gate error: '+String(err?.message||err)};
+    }
+  }
 
   function clearReleaseNotice(){
     const box=document.getElementById('siteNotice'),text=document.getElementById('siteNoticeText'),action=document.getElementById('siteNoticeAction');
@@ -64,15 +108,19 @@
     result.checkedAt=new Date().toISOString();result.mode='live';result.checks=[];
     result.counts={competitions:snap.competitions.length,programmes:snap.programmes.length,scholarships:snap.scholarships.length,total:snap.competitions.length+snap.programmes.length+snap.scholarships.length};
 
-    add('Competition dataset loaded',snap.competitions.length>0,snap.competitions.length+' live records loaded','critical');
-    add('Programme dataset loaded',snap.programmes.length>0,snap.programmes.length+' live records loaded','critical');
-    add('Funding dataset loaded',snap.scholarships.length>0,snap.scholarships.length+' live records loaded','critical');
+    add('Browser publication gate',Boolean(result.publicationGate?.applied),result.publicationGate?.detail||'Gate did not run','critical');
+    add('Competition dataset loaded',snap.competitions.length>0,snap.competitions.length+' public records loaded','critical');
+    add('Programme dataset loaded',snap.programmes.length>0,snap.programmes.length+' public records loaded','critical');
+    add('Funding dataset loaded',snap.scholarships.length>0,snap.scholarships.length+' public records loaded','critical');
     add('Competition IDs present',idsPresent(snap.competitions),snap.competitions.length+' records checked','critical');
     add('Programme IDs present',idsPresent(snap.programmes),snap.programmes.length+' records checked','critical');
     add('Funding IDs present',idsPresent(snap.scholarships),snap.scholarships.length+' records checked','critical');
     add('Competition IDs unique',uniqueIds(snap.competitions),snap.competitions.length+' records checked','critical');
     add('Programme IDs unique',uniqueIds(snap.programmes),snap.programmes.length+' records checked','critical');
     add('Funding IDs unique',uniqueIds(snap.scholarships),snap.scholarships.length+' records checked','critical');
+    add('Only Available competitions published',snap.competitions.every(x=>gateCanon(x.status||x.currentStatus)==='available'),snap.competitions.length+' competition statuses checked','critical');
+    add('Finder-ineligible records excluded',[...snap.programmes,...snap.scholarships].every(x=>!meaningful(x.finderEligible)||gateYes(x.finderEligible)),'Programme/funding eligibility gate checked','critical');
+    add('Boole Investment Challenge quarantined',!recordById('C259'),'C259 must remain internal until a current secondary-school competition is verified','critical');
 
     const c001=recordById('C001'),p001=recordById('P001'),s001=recordById('S001');
     add('C001 regression anchor',Boolean(c001&&/Irish Mathematical Olympiad/i.test(c001.name||'')),c001?.name||'Missing');
@@ -92,20 +140,20 @@
     const criticalFailures=result.checks.filter(x=>x.severity==='critical'&&!x.pass);
     result.releaseReady=criticalFailures.length===0;
     clearReleaseNotice();
-    document.getElementById('status')?.setAttribute('title',result.releaseReady?'Live data · core release checks passed':'Live data · release diagnostics need review');
-    if(result.releaseReady)console.info('[IAO Stage 5] Core release verification passed',result);else console.error('[IAO Stage 5] Core release verification failed',criticalFailures,result);
+    document.getElementById('status')?.setAttribute('title',result.releaseReady?'Live data · publication and core release checks passed':'Live data · release diagnostics need review');
+    if(result.releaseReady)console.info('[IAO Stage 5] Publication and core release verification passed',result);else console.error('[IAO Stage 5] Core release verification failed',criticalFailures,result);
 
-    // Optional probe is diagnostic only and cannot change releaseReady or show UI.
     await probeRelated();
   }
 
   function wait(){
     clearReleaseNotice();
     const status=statusText(),snap=datasetSnapshot();
-    if(/live data/i.test(status)&&snapshotReady(snap))return run(snap);
+    if(/live data/i.test(status)&&snapshotReady(snap)){
+      result.publicationGate=enforcePublicationGate();
+      return run(datasetSnapshot());
+    }
 
-    // The finder intentionally falls back to its preview if the API is unavailable.
-    // That state is already communicated by the finder; Stage 5 stays silent.
     if(/frontend preview/i.test(status)&&Date.now()-started>1500){
       result.checkedAt=new Date().toISOString();result.mode='preview';result.releaseReady=false;
       add('Live public API available',false,'Finder is using its preview fallback','warning');
