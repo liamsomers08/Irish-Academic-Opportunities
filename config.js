@@ -1,14 +1,14 @@
 window.IRISH_OPPORTUNITIES_CONFIG = Object.freeze({
   API_BASE_URL: 'https://script.google.com/macros/s/AKfycbxtdwmsst7y-Olb5GKT0VtWXravSZ_4zysV5W1iybTk13DByyW3OayyvGCanhFebtRokg/exec',
 
-  // Used only when the public API cannot be reached. Stage 5 verified these
-  // against the live WebApp V3.1 Admin Dashboard on 24 August 2026.
+  // Used only when the public API cannot be reached. These counts reflect the
+  // evidence-quality publication gate verified against the live master on 26 August 2026.
   FALLBACK_COUNTS: {
-    competitions: 353,
-    programmes: 345,
-    scholarships: 334
+    competitions: 332,
+    programmes: 343,
+    scholarships: 333
   },
-  FALLBACK_UPDATED_LABEL: 'Verified against live master 24 August 2026',
+  FALLBACK_UPDATED_LABEL: 'Verified evidence-qualified public master 26 August 2026',
   DEFAULT_TAB: 'home',
   PAGE_SIZE: 30,
   SITE_NAME: 'Irish Academic Opportunities Finder'
