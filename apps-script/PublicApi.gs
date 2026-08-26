@@ -40,7 +40,7 @@ function webPublicApiHandleGet(e) {
 
     switch (action) {
       case 'bootstrap':
-        data = webAppGetBootstrap();
+        data = webPublicApiFilteredBootstrap_(webAppGetBootstrap());
         break;
 
       case 'dataset': {
@@ -48,12 +48,12 @@ function webPublicApiHandleGet(e) {
         if (WEB_PUBLIC_API_ALLOWED_KINDS.indexOf(kind) === -1) {
           throw new Error('Unsupported dataset.');
         }
-        data = webAppGetDataset(kind);
+        data = webPublicApiFilterPayload_(webAppGetDataset(kind), kind);
         break;
       }
 
       case 'upcoming':
-        data = webAppGetUpcoming();
+        data = webPublicApiFilterUpcoming_(webAppGetUpcoming());
         break;
 
       case 'related': {
@@ -63,7 +63,7 @@ function webPublicApiHandleGet(e) {
         if (WEB_PUBLIC_API_ALLOWED_KINDS.indexOf(kind) === -1 || !id) {
           throw new Error('Invalid related-opportunity request.');
         }
-        data = webAppGetRelated(kind, id, limit);
+        data = webPublicApiFilterPayload_(webAppGetRelated(kind, id, limit), kind);
         break;
       }
 
@@ -78,6 +78,123 @@ function webPublicApiHandleGet(e) {
       error: err && err.message ? String(err.message) : 'Request failed.'
     });
   }
+}
+
+/**
+ * Public publication gate.
+ *
+ * Competitions are public only when the master explicitly marks them Available.
+ * Programmes and scholarships are public only when Finder Eligible is not No;
+ * the current V3 public-safe payload normally contains only eligible rows already,
+ * but this second gate prevents an internal review/exclusion row leaking publicly.
+ */
+function webPublicApiRecordAllowed_(record, kind) {
+  if (!record || typeof record !== 'object') return false;
+  const idx = {};
+  Object.keys(record).forEach(function(key) {
+    idx[webPublicApiCanon_(key)] = record[key];
+  });
+  const get = function() {
+    for (let i = 0; i < arguments.length; i++) {
+      const value = idx[webPublicApiCanon_(arguments[i])];
+      if (value !== undefined && value !== null && String(value).trim() !== '') return value;
+    }
+    return '';
+  };
+
+  if (kind === 'competitions') {
+    return webPublicApiCanon_(get('Status', 'status', 'Current Status')) === 'available';
+  }
+
+  const finderEligible = webPublicApiCanon_(get('Finder Eligible?', 'finderEligible'));
+  if (finderEligible && !/^(yes|true|y|1)$/.test(finderEligible)) return false;
+
+  if (kind === 'programmes') {
+    const programmeStatus = webPublicApiCanon_(get('Programme Status', 'programmeStatus'));
+    const researchStatus = webPublicApiCanon_(get('Research Status', 'researchStatus'));
+    if (/underreview|needsreview|unverified|notavailable/.test(programmeStatus + researchStatus)) return false;
+  }
+
+  return true;
+}
+
+function webPublicApiFilterPayload_(payload, kind) {
+  if (Array.isArray(payload)) {
+    return payload.filter(function(record) {
+      return webPublicApiRecordAllowed_(record, kind);
+    });
+  }
+  if (!payload || typeof payload !== 'object') return payload;
+  const clone = Object.assign({}, payload);
+  if (Array.isArray(clone.records)) {
+    clone.records = clone.records.filter(function(record) {
+      return webPublicApiRecordAllowed_(record, kind);
+    });
+  }
+  if (Array.isArray(clone.items)) {
+    clone.items = clone.items.filter(function(record) {
+      return webPublicApiRecordAllowed_(record, kind);
+    });
+  }
+  return clone;
+}
+
+function webPublicApiFilteredBootstrap_(bootstrap) {
+  if (!bootstrap || typeof bootstrap !== 'object') return bootstrap;
+  const clone = Object.assign({}, bootstrap);
+  const counts = {};
+  WEB_PUBLIC_API_ALLOWED_KINDS.forEach(function(kind) {
+    const filtered = webPublicApiFilterPayload_(webAppGetDataset(kind), kind);
+    const list = Array.isArray(filtered) ? filtered :
+      (filtered && Array.isArray(filtered.records) ? filtered.records :
+      (filtered && Array.isArray(filtered.items) ? filtered.items : []));
+    counts[kind] = list.length;
+  });
+  clone.counts = Object.assign({}, clone.counts || {}, counts);
+  return clone;
+}
+
+function webPublicApiFilterUpcoming_(payload) {
+  const allowedIds = {};
+  WEB_PUBLIC_API_ALLOWED_KINDS.forEach(function(kind) {
+    const filtered = webPublicApiFilterPayload_(webAppGetDataset(kind), kind);
+    const list = Array.isArray(filtered) ? filtered :
+      (filtered && Array.isArray(filtered.records) ? filtered.records :
+      (filtered && Array.isArray(filtered.items) ? filtered.items : []));
+    list.forEach(function(record) {
+      const id = webPublicApiRecordId_(record);
+      if (id) allowedIds[id] = true;
+    });
+  });
+
+  const filterList = function(list) {
+    return list.filter(function(record) {
+      const id = webPublicApiRecordId_(record);
+      return !id || allowedIds[id] === true;
+    });
+  };
+
+  if (Array.isArray(payload)) return filterList(payload);
+  if (!payload || typeof payload !== 'object') return payload;
+  const clone = Object.assign({}, payload);
+  if (Array.isArray(clone.records)) clone.records = filterList(clone.records);
+  if (Array.isArray(clone.items)) clone.items = filterList(clone.items);
+  return clone;
+}
+
+function webPublicApiRecordId_(record) {
+  if (!record || typeof record !== 'object') return '';
+  const idx = {};
+  Object.keys(record).forEach(function(key) {
+    idx[webPublicApiCanon_(key)] = record[key];
+  });
+  return String(
+    idx.id || idx.competitionid || idx.programmeid || idx.scholarshipid || ''
+  ).trim();
+}
+
+function webPublicApiCanon_(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
 function webPublicApiHandlePost(e) {
