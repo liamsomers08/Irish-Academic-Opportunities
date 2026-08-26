@@ -4,7 +4,7 @@ window.IRISH_OPPORTUNITIES_CONFIG = Object.freeze({
   // Used only when the public API cannot be reached. These counts reflect the
   // evidence-quality publication gate verified against the live master on 26 August 2026.
   FALLBACK_COUNTS: {
-    competitions: 332,
+    competitions: 331,
     programmes: 343,
     scholarships: 333
   },
