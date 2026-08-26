@@ -1,4 +1,4 @@
-const CACHE = 'irish-academic-opportunities-v18-geographic-search';
+const CACHE = 'irish-academic-opportunities-v19-evidence-gate';
 const CORE = [
   './',
   './index.html',
